@@ -1,200 +1,51 @@
-using BreakInfinity;
-using io.github.thisisnozaku.idle.framework.Events;
+using io.github.thisisnozaku.scripting.context;
+using io.github.thisisnozaku.scripting.types;
 using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Interop;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using io.github.thisisnozaku.idle.framework.Engine.Logging;
 
-namespace io.github.thisisnozaku.idle.framework.Engine.Scripting
+namespace io.github.thisisnozaku.scripting
 {
-    public class ScriptingService
+    public class ScriptingModule
     {
-        private IdleEngine engine;
-        private Table defaultMetatable;
-        private Dictionary<string, object> BuiltIns = new Dictionary<string, object>()
-        {
-            { "math", new Dictionary<string, object>() {
-                { "max", new CallbackFunction((ctx, args) => {
-                    return DynValue.FromObject(ctx.GetScript(), BigDouble.Max(ScriptingService.DynValueToBigDouble(args[0]), ScriptingService.DynValueToBigDouble(args[1])));
-                }) },
-                { "min", new CallbackFunction((ctx, args) => {
-                    return DynValue.FromObject(ctx.GetScript(), BigDouble.Min(ScriptingService.DynValueToBigDouble(args[0]), ScriptingService.DynValueToBigDouble(args[1])));
-                }) },
-                { "clamp", new CallbackFunction((ctx, args) => {
-                    BigDouble value = ScriptingService.DynValueToBigDouble(args[0]);
-                    BigDouble floor = ScriptingService.DynValueToBigDouble(args[1]);
-                    BigDouble ceiling = ScriptingService.DynValueToBigDouble(args[2]);
-                    return DynValue.FromObject(ctx.GetScript(), BigDouble.Max(floor, BigDouble.Min(ceiling, value)));
-                }) },
-                { "pow", new CallbackFunction((ctx, args) => {
-                    BigDouble lhv = ScriptingService.DynValueToBigDouble(args[0]);
-                    BigDouble rhv = ScriptingService.DynValueToBigDouble(args[1]);
-                    return DynValue.FromObject(ctx.GetScript(), BigDouble.Pow(lhv, rhv));
-                }) },
-                { "ceil", new CallbackFunction((ctx, args) =>
-                {
-                    return DynValue.FromObject(null, BigDouble.Ceiling(DynValueToBigDouble(args[0])));
-                }) },
-                { "floor", new CallbackFunction((ctx, args) =>
-                {
-                    return DynValue.FromObject(null, BigDouble.Floor(DynValueToBigDouble(args[0])));
-                }) }
-            }},
-            { "table", new Dictionary<string, object>() {
-                { "insert", (Action<DynValue, DynValue>)((tbl, value)=> {
-                    if(tbl.Type != DataType.Table)
-                    {
-                        throw new InvalidOperationException("Tried to insert into a non-table");
-                    }
-                    tbl.Table.Append(value);
-                }) }
-            }},
-            { "error", (Action<string>)((message) => throw new ScriptRuntimeException(message)) }
-        };
         internal Script script;
         public Table Globals => script.Globals;
-        public ScriptingService(IdleEngine engine)
+
+        public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
-            this.engine = engine;
-            script = new Script(CoreModules.Preset_HardSandbox ^ CoreModules.Math);
-
-            UserData.RegisterType<IdleEngine>();
-            UserData.RegisterType(new BigDoubleTypeDescriptor(typeof(BigDouble), InteropAccessMode.Default));
-            UserData.RegisterType<WrappedDictionary>();
-            UserData.RegisterType<Type>();
-            UserData.RegisterType<LoggingService>();
-            UserData.RegisterType<KeyValuePair<object, object>>();
-
-            SetScriptToClrCustomConversion(DataType.Number, typeof(BigDouble), (arg) =>
-            {
-                return BigDouble.Parse(arg.CastToString());
-            });
-            SetScriptToClrCustomConversion(DataType.UserData, typeof(BigDouble), (arg) =>
-            {
-                var obj = arg.ToObject();
-                if (obj is BigDouble)
-                {
-                    return (BigDouble)obj;
-                }
-                return null;
-            });
-            SetScriptToClrCustomConversion(DataType.String, typeof(BigDouble), (arg) =>
-            {
-                var converted = arg.CastToNumber();
-                if (converted != null)
-                {
-                    return new BigDouble(converted.Value);
-                }
-                return BigDouble.NaN;
-            });
-            SetScriptToClrCustomConversion(DataType.Void, typeof(BigDouble), (arg) =>
-            {
-                return BigDouble.Zero;
-            });
-            SetScriptToClrCustomConversion(DataType.Nil, typeof(BigDouble), (arg) =>
-            {
-                return BigDouble.Zero;
-            });
-            SetClrToScriptCustomConversion(typeof(BigDouble), (script, arg) =>
-            {
-                return UserData.Create(arg);
-            });
-            SetClrToScriptCustomConversion(typeof(IDictionary), (script, arg) =>
-            {
-                return DynValue.FromObject(script, new WrappedDictionary(arg as IDictionary));
-            });
-            SetClrToScriptCustomConversion(typeof(Dictionary<string, object>), (script, arg) =>
-            {
-                return DynValue.FromObject(script, new WrappedDictionary(arg as Dictionary<string, object>));
-            });
-
-            ConfigureBuiltIns(engine);
-            EngineAwareIndexMethod = DynValue.NewCallback((Func<ScriptExecutionContext, CallbackArguments, DynValue>)((ctx, args) =>
-            {
-                string locationArg = args[1].CastToString();
-                object value;
-                if (!BuiltIns.TryGetValue(locationArg, out value))
-                {
-                    engine.GlobalProperties.TryGetValue(locationArg, out value);
-                }
-                return DynValue.FromObject(null, value);
-            }));
-            EngineAwareIndexSetMethod = DynValue.NewCallback((Func<ScriptExecutionContext, CallbackArguments, DynValue>)((ctx, args) =>
-            {
-                string locationArg = args[1].CastToString();
-                if (args[2].Type == DataType.Number)
-                {
-                    engine.GlobalProperties[locationArg] = new BigDouble(args[2].Number);
-                }
-                else
-                {
-                    engine.GlobalProperties[locationArg] = args[2].ToObject();
-                }
-
-                return DynValue.Nil;
-            }));
-
-            defaultMetatable = new Table(script);
-            defaultMetatable.Set("__index", EngineAwareIndexMethod);
-            defaultMetatable.Set("__newindex", EngineAwareIndexSetMethod);
+            script = new Script(CoreModules.Preset_HardSandbox);
+            Configure(configurationFlags);
         }
 
-        private void ConfigureBuiltIns(IdleEngine engine)
+        private void Configure(ScriptingModuleConfigurationFlag configurationFlags)
         {
-            BuiltIns["engine"] = engine;
-        }
-
-        public static BigDouble DynValueToBigDouble(DynValue dynValue)
-        {
-            switch(dynValue.Type)
+            if((configurationFlags & ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING) != 0)
             {
-                case DataType.Nil:
-                    return BigDouble.Zero;
-                case DataType.UserData:
-                    var userData = dynValue.UserData.Object;
-                    if (userData is BigDouble)
-                    {
-                        return (BigDouble)userData;
-                    }
-                    break;
-                case DataType.Number:
-                    return new BigDouble(dynValue.Number);
+                AddTypeAdapter(new TypeAdapter.AdapterBuilder()
+                    .WithClrConversion<IDictionary>(DictionaryTypeAdapter.Converter)
+                    .WithClrConversion<IDictionary<string, object>>(DictionaryTypeAdapter.Converter)
+                    .WithClrConversion<Dictionary<string, object>>(DictionaryTypeAdapter.Converter)
+                    .WithAdditionalRegisteredTypes(typeof(WrappedDictionary))
+                    .Build());
             }
-            throw new InvalidOperationException();
         }
 
-        private DynValue EngineAwareIndexMethod;
-        private DynValue EngineAwareIndexSetMethod;
-
-        public Table SetupContext(IDictionary<string, object> contextVariables = null)
+        public void AddTypeAdapter(TypeAdapter typeAdapter)
         {
-            var contextTable = new Table(script);
-            foreach (var global in engine.GlobalProperties)
+            foreach (var type in typeAdapter.ClrToScriptConversions)
             {
-                contextTable[global.Key] = global.Value;
-            }
-            if (contextVariables != null)
-            {
-                foreach (var contextVariable in contextVariables)
+                UserData.RegisterType(type.Key);
+                if(Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(type.Key) != null)
                 {
-                    contextTable[contextVariable.Key] = contextVariable.Value;
+                    throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", type));
                 }
+                Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion(type.Key, type.Value);
             }
-            contextTable.MetaTable = defaultMetatable;
-            contextTable["engine"] = engine;
-            return contextTable;
-        }
-
-        public void SetClrToScriptCustomConversion(Type clrType, Func<Script, object, DynValue> converter)
-        {
-            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion(clrType, converter);
-        }
-
-        public void SetScriptToClrCustomConversion(DataType scriptDataType, Type clrDataType, Func<DynValue, object> converter)
-        {
-            Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(scriptDataType, clrDataType, converter);
+            foreach(var type in typeAdapter.TypesToRegister)
+            {
+                UserData.RegisterType(type);
+            }
         }
 
         public DynValue EvaluateStringAsScript(string script, IDictionary<string, object> localContext = null)
@@ -216,9 +67,9 @@ namespace io.github.thisisnozaku.idle.framework.Engine.Scripting
                 { localContext.Item1, localContext.Item2 }});
         }
 
-        public DynValue Evaluate(DynValue toEvaluate, ScriptingContext context)
+        public DynValue Evaluate(DynValue toEvaluate, IScriptingContext context)
         {
-            return Evaluate(toEvaluate, context.GetScriptingProperties());
+            return Evaluate(toEvaluate, context.GetContextVariables());
         }
 
         public DynValue Evaluate(DynValue toEvaluate, IDictionary<string, object> localContext = null)
@@ -239,45 +90,30 @@ namespace io.github.thisisnozaku.idle.framework.Engine.Scripting
                 default:
                     throw new InvalidOperationException(String.Format("The DynValue must contains a string to interpret or a function to call, but was {0}", toEvaluate.Type));
             }
-            if (result.Type == DataType.Number)
-            {
-                return DynValue.FromObject(null, new BigDouble(result.Number));
-            }
             return result;
         }
 
-        private class WrappedDictionary : IUserDataType, ITraversableType
+        private Table SetupContext(IDictionary<string, object> localContext)
         {
-            private IDictionary underlying;
-            public WrappedDictionary(IDictionary underlying)
+            if (localContext != null)
             {
-                this.underlying = underlying;
-            }
-
-            public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
-            {
-                if(underlying.Contains(index.ToObject()))
+                var newContext = new Table(script);
+                if (localContext != null)
                 {
-                    return DynValue.FromObject(script, underlying[index.ToObject()]);
+                    foreach (var property in localContext)
+                    {
+                        newContext[property.Key] = property.Value;
+                    }
                 }
-                return DynValue.Nil;
-                
-            }
 
-            public DynValue MetaIndex(Script script, string metaname)
+                foreach (var global in script.Globals.Keys)
+                {
+                    newContext[global] = script.Globals[global];
+                }
+                return newContext;
+            } else
             {
-                throw new NotImplementedException();
-            }
-
-            public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing)
-            {
-                underlying[index.ToObject()] = value.ToObject();
-                return true;
-            }
-
-            public IEnumerable GetTraversableFields()
-            {
-                return underlying.Values;
+                return null;
             }
         }
     }
