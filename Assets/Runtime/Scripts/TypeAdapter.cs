@@ -10,36 +10,30 @@ namespace io.github.thisisnozaku.scripting.types
      */
     public class TypeAdapter
     {
-        public Type[] TypesToRegister;
-        public Dictionary<Type, Func<Script, object, DynValue>> ClrToScriptConversions { get; }
+        public Type TypeToRegister;
+        public Func<Script, object, DynValue> ClrToScriptConversion { get; }
 
-        public TypeAdapter(Type[] typesToRegister, Dictionary<Type, Func<Script, object, DynValue>> ClrConverter)
+        public TypeAdapter(Type typeToRegister, Func<Script, object, DynValue> ClrConverter)
         {
-            this.TypesToRegister = typesToRegister;
-            ClrToScriptConversions = ClrConverter;
+            this.TypeToRegister = typeToRegister;
+            ClrToScriptConversion = ClrConverter;
         }
 
 
         public class AdapterBuilder
         {
-            private Dictionary<Type, Func<Script, object, DynValue>> ClrToScriptConversions =  new Dictionary<Type, Func<Script, object, DynValue>>();
+            private Func<Script, object, DynValue> ClrToScriptConversion;
             private Type[] TypesToRegister;
 
-            public AdapterBuilder WithClrConversion<T>(Func<Script, object, DynValue> ClrToScriptConverter)
+            public AdapterBuilder WithClrConversion(Func<Script, object, DynValue> ClrToScriptConverter)
             {
-                ClrToScriptConversions[typeof(T)] = ClrToScriptConverter;
+                ClrToScriptConversion = ClrToScriptConverter;
                 return this;
             }
 
-            public AdapterBuilder WithAdditionalRegisteredTypes(params Type[] type)
+            public TypeAdapter Build(Type forType)
             {
-                TypesToRegister = type;
-                return this;
-            }
-
-            public TypeAdapter Build()
-            {
-                return new TypeAdapter(TypesToRegister, ClrToScriptConversions);
+                return new TypeAdapter(forType, ClrToScriptConversion);
             }
         }
     }

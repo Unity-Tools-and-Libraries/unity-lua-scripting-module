@@ -20,32 +20,26 @@ namespace io.github.thisisnozaku.scripting
 
         private void Configure(ScriptingModuleConfigurationFlag configurationFlags)
         {
-            if((configurationFlags & ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING) != 0)
+            if ((configurationFlags & ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING) != 0)
             {
+                UserData.RegisterType<WrappedDictionary>();
                 AddTypeAdapter(new TypeAdapter.AdapterBuilder()
-                    .WithClrConversion<IDictionary>(DictionaryTypeAdapter.Converter)
-                    .WithClrConversion<IDictionary<string, object>>(DictionaryTypeAdapter.Converter)
-                    .WithClrConversion<Dictionary<string, object>>(DictionaryTypeAdapter.Converter)
-                    .WithAdditionalRegisteredTypes(typeof(WrappedDictionary))
-                    .Build());
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build(typeof(IDictionary)));
+                AddTypeAdapter(new TypeAdapter.AdapterBuilder()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build(typeof(IDictionary<string, object>)));
+                AddTypeAdapter(new TypeAdapter.AdapterBuilder()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build(typeof(Dictionary<string, object>)));
             }
         }
 
         public void AddTypeAdapter(TypeAdapter typeAdapter)
         {
-            foreach (var type in typeAdapter.ClrToScriptConversions)
+            UserData.RegisterType(typeAdapter.TypeToRegister);
+            if (Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeAdapter.TypeToRegister) != null)
             {
-                UserData.RegisterType(type.Key);
-                if(Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(type.Key) != null)
-                {
-                    throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", type));
-                }
-                Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion(type.Key, type.Value);
+                throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", typeAdapter.TypeToRegister));
             }
-            foreach(var type in typeAdapter.TypesToRegister)
-            {
-                UserData.RegisterType(type);
-            }
+            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion(typeAdapter.TypeToRegister, typeAdapter.ClrToScriptConversion);
         }
 
         public DynValue EvaluateStringAsScript(string script, IDictionary<string, object> localContext = null)
@@ -111,7 +105,8 @@ namespace io.github.thisisnozaku.scripting
                     newContext[global] = script.Globals[global];
                 }
                 return newContext;
-            } else
+            }
+            else
             {
                 return null;
             }
