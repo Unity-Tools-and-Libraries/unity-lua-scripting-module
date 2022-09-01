@@ -11,6 +11,10 @@ namespace io.github.thisisnozaku.scripting
     {
         internal Script script;
         public Table Globals => script.Globals;
+        /*
+         * Function to customize the context that will be used by a script execution.
+         */
+        public Func<Table, Table> ContextCustomizer { get; set; }
 
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
@@ -89,6 +93,7 @@ namespace io.github.thisisnozaku.scripting
 
         private Table SetupContext(IDictionary<string, object> localContext)
         {
+            Table contextTable = script.Globals;
             if (localContext != null)
             {
                 var newContext = new Table(script);
@@ -104,12 +109,13 @@ namespace io.github.thisisnozaku.scripting
                 {
                     newContext[global] = script.Globals[global];
                 }
-                return newContext;
+                contextTable = newContext;
             }
-            else
+            if(ContextCustomizer != null)
             {
-                return null;
+                contextTable = ContextCustomizer(contextTable);
             }
+            return contextTable;
         }
     }
 }

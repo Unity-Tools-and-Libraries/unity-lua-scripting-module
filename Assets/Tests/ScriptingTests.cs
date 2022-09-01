@@ -117,5 +117,19 @@ namespace io.github.thisisnozaku.scripting
                     });
             });
         }
+
+        [Test]
+        public void CanConfigureTheMetatableUsedByContext()
+        {
+            Scripting.ContextCustomizer = (ctx) =>
+            {
+                ctx.MetaTable = new Table(null);
+                ctx.MetaTable.Set("__index", DynValue.NewCallback((ctx, args) => {
+                    return DynValue.NewNumber(1);
+                }));
+                return ctx;
+            };
+            Assert.AreEqual(1, Scripting.EvaluateStringAsScript("return foo").Number);
+        }
     }
 }
