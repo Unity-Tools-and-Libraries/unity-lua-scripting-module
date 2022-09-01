@@ -8,33 +8,40 @@ namespace io.github.thisisnozaku.scripting.types
     /*
      * Packages some definitions to support interop between an application domain type and the scripting engine.
      */
-    public class TypeAdapter
+    public class TypeAdapter<T>
     {
-        public Type TypeToRegister;
-        public Func<Script, object, DynValue> ClrToScriptConversion { get; }
+        public Func<Script, T, DynValue> ClrToScriptConverter { get; }
+        public Dictionary<DataType, Func<DynValue, object>> ScriptToClrConverters { get; }
 
-        public TypeAdapter(Type typeToRegister, Func<Script, object, DynValue> ClrConverter)
+        public TypeAdapter(Func<Script, T, DynValue> ClrConverter, Dictionary<DataType, Func<DynValue, object>> scriptToClrConverter)
         {
-            this.TypeToRegister = typeToRegister;
-            ClrToScriptConversion = ClrConverter;
+            ClrToScriptConverter = ClrConverter;
+            ScriptToClrConverters = scriptToClrConverter;
         }
 
 
-        public class AdapterBuilder
+        public class AdapterBuilder<T>
         {
-            private Func<Script, object, DynValue> ClrToScriptConversion;
-            private Type[] TypesToRegister;
+            private Func<Script, T, DynValue> ClrToScriptConverter;
+            private Dictionary<DataType, Func<DynValue, object>> ScriptToClrConverters = new Dictionary<DataType, Func<DynValue, object>>();
 
-            public AdapterBuilder WithClrConversion(Func<Script, object, DynValue> ClrToScriptConverter)
+            public AdapterBuilder<T> WithClrConversion(Func<Script, T, DynValue> ClrToScriptConverter)
             {
-                ClrToScriptConversion = ClrToScriptConverter;
+                this.ClrToScriptConverter = ClrToScriptConverter;
                 return this;
             }
 
-            public TypeAdapter Build(Type forType)
+            public TypeAdapter<T> Build()
             {
-                return new TypeAdapter(forType, ClrToScriptConversion);
+                return new TypeAdapter<T>(ClrToScriptConverter, ScriptToClrConverters);
             }
+
+            public AdapterBuilder<T> WithScriptConversion(DataType scriptType, Func<DynValue, object> ScriptToClrConverter)
+            {
+                this.ScriptToClrConverters[scriptType] = ScriptToClrConverter;
+                return this;
+            }
+
         }
     }
 }

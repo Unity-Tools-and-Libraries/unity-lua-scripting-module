@@ -27,23 +27,30 @@ namespace io.github.thisisnozaku.scripting
             if ((configurationFlags & ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING) != 0)
             {
                 UserData.RegisterType<WrappedDictionary>();
-                AddTypeAdapter(new TypeAdapter.AdapterBuilder()
-                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build(typeof(IDictionary)));
-                AddTypeAdapter(new TypeAdapter.AdapterBuilder()
-                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build(typeof(IDictionary<string, object>)));
-                AddTypeAdapter(new TypeAdapter.AdapterBuilder()
-                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build(typeof(Dictionary<string, object>)));
+                AddTypeAdapter(new TypeAdapter<IDictionary>.AdapterBuilder<IDictionary>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+                AddTypeAdapter(new TypeAdapter<IDictionary<string, object>>.AdapterBuilder<IDictionary<string, object>>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+                AddTypeAdapter(new TypeAdapter<Dictionary<string, object>>.AdapterBuilder<Dictionary<string, object>>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
             }
         }
 
-        public void AddTypeAdapter(TypeAdapter typeAdapter)
+        public void AddTypeAdapter<T>(TypeAdapter<T> typeAdapter)
         {
-            UserData.RegisterType(typeAdapter.TypeToRegister);
-            if (Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeAdapter.TypeToRegister) != null)
+            UserData.RegisterType<T>();
+            if (Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeof(T)) != null)
             {
-                throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", typeAdapter.TypeToRegister));
+                throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", typeof(T)));
             }
-            Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion(typeAdapter.TypeToRegister, typeAdapter.ClrToScriptConversion);
+            if (typeAdapter.ClrToScriptConverter != null)
+            {
+                Script.GlobalOptions.CustomConverters.SetClrToScriptCustomConversion<T>(typeAdapter.ClrToScriptConverter);
+            }
+            foreach(var conversion in typeAdapter.ScriptToClrConverters)
+            {
+                Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(conversion.Key, typeof(T), conversion.Value);
+            }
         }
 
         public DynValue EvaluateStringAsScript(string script, IDictionary<string, object> localContext = null)

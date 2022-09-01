@@ -131,5 +131,52 @@ namespace io.github.thisisnozaku.scripting
             };
             Assert.AreEqual(1, Scripting.EvaluateStringAsScript("return foo").Number);
         }
+
+        [Test]
+        public void TypeAdaptersRegisterTheirTypeWithUserData()
+        {
+            Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>().Build());
+            Assert.DoesNotThrow(() =>
+            {
+                Scripting.EvaluateStringAsScript("print('hello world')", Tuple.Create<string, object>("", new TestType()));
+            });
+        }
+
+        [Test]
+        public void TypeAdaptersCanDefineAClrObjectToScriptTypeConverter()
+        {
+            Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>()
+                .WithClrConversion((script, obj) => DynValue.FromObject(script, 1))
+                .Build());
+            Assert.DoesNotThrow(() =>
+            {
+                Scripting.EvaluateStringAsScript("print('hello world')", Tuple.Create<string, object>("", new TestType()));
+            });
+        }
+
+        [Test]
+        public void TestAdaptersCanDefineAScriptObjectToClrTypeConverter()
+        {
+            Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>()
+                .WithScriptConversion(DataType.Number, (val) => new TestType())
+                .Build());
+            Assert.DoesNotThrow(() =>
+            {
+                Assert.AreEqual(new TestType(), Scripting.EvaluateStringAsScript("return foo", Tuple.Create<string, object>("foo", DynValue.NewNumber(1))).ToObject<TestType>());
+            });
+        }
+
+        public class TestType
+        {
+            public override bool Equals(object obj)
+            {
+                return obj.GetType() == GetType();
+            }
+
+            public override int GetHashCode()
+            {
+                return base.GetHashCode();
+            }
+        }
     }
 }
