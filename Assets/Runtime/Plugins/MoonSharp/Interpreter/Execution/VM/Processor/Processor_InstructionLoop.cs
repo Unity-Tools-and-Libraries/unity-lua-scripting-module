@@ -1367,12 +1367,10 @@ namespace MoonSharp.Interpreter.Execution.VM
         private string GetDebugName()
         {
 			string debugName = "";
-			DataType lastType = DataType.Nil;
 			while (m_DebugIndexesStack.Count > 0)
 			{
 				var next = m_DebugIndexesStack.Pop();
-				debugName += lastType == DataType.Table ? String.Format("[{0}]", next.ToDebugPrintString()) : String.Format(".{0}", next.ToDebugPrintString());
-				lastType = next.Type;
+				debugName += String.Format("{0}{1}", next.ToPrintString(), m_DebugIndexesStack.Count > 0 ? "." : "");
 			}
 			return debugName;
 		}
