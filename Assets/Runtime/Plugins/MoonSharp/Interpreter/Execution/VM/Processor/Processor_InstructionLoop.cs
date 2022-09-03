@@ -225,7 +225,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 						case OpCode.IndexSetN:
 						case OpCode.IndexSetL:
 							instructionPtr = ExecIndexSet(i, instructionPtr);
-							m_DebugNameStack.Clear(); // After successful set, clear our debug name.
+							m_DebugIndexesStack.Clear(); // After successful set, clear our debug name.
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							break;
 						case OpCode.Invalid:
@@ -1292,7 +1292,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 			DynValue originalIdx = i.Value ?? m_ValueStack.Pop();
 			DynValue idx = originalIdx.ToScalar();
 			DynValue obj = m_ValueStack.Pop().ToScalar();
-			m_DebugNameStack.Push(idx.ToPrintString());
+			m_DebugIndexesStack.Push(idx);
 
 			DynValue h = null;
 
@@ -1367,9 +1367,12 @@ namespace MoonSharp.Interpreter.Execution.VM
         private string GetDebugName()
         {
 			string debugName = "";
-			while (m_DebugNameStack.Count > 0)
+			DataType lastType = DataType.Nil;
+			while (m_DebugIndexesStack.Count > 0)
 			{
-				debugName += m_DebugNameStack.Pop();
+				var next = m_DebugIndexesStack.Pop();
+				debugName += lastType == DataType.Table ? String.Format("[{0}]", next.ToDebugPrintString()) : String.Format(".{0}", next.ToDebugPrintString());
+				lastType = next.Type;
 			}
 			return debugName;
 		}
