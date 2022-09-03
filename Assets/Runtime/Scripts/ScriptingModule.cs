@@ -29,9 +29,20 @@ namespace io.github.thisisnozaku.scripting
                 UserData.RegisterType<WrappedDictionary>();
                 AddTypeAdapter(new TypeAdapter<IDictionary>.AdapterBuilder<IDictionary>()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+
                 AddTypeAdapter(new TypeAdapter<IDictionary<string, object>>.AdapterBuilder<IDictionary<string, object>>()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
                 AddTypeAdapter(new TypeAdapter<Dictionary<string, object>>.AdapterBuilder<Dictionary<string, object>>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+
+                AddTypeAdapter(new TypeAdapter<IDictionary<int, object>>.AdapterBuilder<IDictionary<int, object>>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+                AddTypeAdapter(new TypeAdapter<Dictionary<int, object>>.AdapterBuilder<Dictionary<int, object>>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+
+                AddTypeAdapter(new TypeAdapter<IDictionary<long, object>>.AdapterBuilder<IDictionary<long, object>>()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+                AddTypeAdapter(new TypeAdapter<Dictionary<long, object>>.AdapterBuilder<Dictionary<long, object>>()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
             }
         }
