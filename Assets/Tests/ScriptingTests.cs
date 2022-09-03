@@ -155,7 +155,7 @@ namespace io.github.thisisnozaku.scripting
         }
 
         [Test]
-        public void TestAdaptersCanDefineAScriptObjectToClrTypeConverter()
+        public void TypeAdaptersCanDefineAScriptObjectToClrTypeConverter()
         {
             Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>()
                 .WithScriptConversion(DataType.Number, (val) => new TestType())
