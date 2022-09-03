@@ -225,6 +225,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 						case OpCode.IndexSetN:
 						case OpCode.IndexSetL:
 							instructionPtr = ExecIndexSet(i, instructionPtr);
+							m_DebugNameStack.Clear(); // After successful set, clear our debug name.
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							break;
 						case OpCode.Invalid:
@@ -1256,7 +1257,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					h = GetMetamethodRaw(obj, "__newindex");
 
 					if (h == null || h.IsNil())
-						throw ScriptRuntimeException.IndexType(obj);
+						throw ScriptRuntimeException.IndexType(obj, GetDebugName());
 				}
 
 				if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
@@ -1291,6 +1292,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 			DynValue originalIdx = i.Value ?? m_ValueStack.Pop();
 			DynValue idx = originalIdx.ToScalar();
 			DynValue obj = m_ValueStack.Pop().ToScalar();
+			m_DebugNameStack.Push(idx.ToPrintString());
 
 			DynValue h = null;
 
@@ -1341,7 +1343,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					h = GetMetamethodRaw(obj, "__index");
 
 					if (h == null || h.IsNil())
-						throw ScriptRuntimeException.IndexType(obj);
+						throw ScriptRuntimeException.IndexType(obj, GetDebugName());
 				}
 
 				if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
@@ -1362,9 +1364,14 @@ namespace MoonSharp.Interpreter.Execution.VM
 			throw ScriptRuntimeException.LoopInIndex();
 		}
 
-
-
-
-
-	}
+        private string GetDebugName()
+        {
+			string debugName = "";
+			while (m_DebugNameStack.Count > 0)
+			{
+				debugName += m_DebugNameStack.Pop();
+			}
+			return debugName;
+		}
+    }
 }
