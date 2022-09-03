@@ -25,3 +25,17 @@ You may pass in an instance of `IDictionary<string, object>`, `KeyValuePair<stri
 
 The module uses the class `TypeAdapter` to bundle configuration for interop between the C# domain and Lua. It's usage is optional.
 
+## Tips, Tricks and Warnings
+### Using Dictionaries Directly in Scripts
+Normally, Moonsharp transforms C# Dictionaries into Lua tables. A disadvantage of this is that changes to the table do not propagate back out to the C# realm- in Lua, UserData is the type that bridges the host and scripting languages.
+
+By passing the `ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING` flag when creating the module, Dictionaries will be wrapped in a UserData that forwards gets and sets to the underlying C# dictionary, so changes to it will be reflected in C#.
+
+You must do additional configuration to the scripting module by passing a `TypeAdapter` for each different generic version of `Dictionary` you will use:
+```
+new scripting.types.TypeAdapter<IDictionary<KeyType, ValueType>>.AdapterBuilder<IDictionary<KeyType, ValueType>>()
+                .WithClrConversion(DictionaryTypeAdapter.Converter)
+                .Build());
+```
+
+With these wrapped dictionaries, keys work slightly differently, due to Lua lacking the breadth of the C# type system. Instead of using values as-is, which does not work automatically with c# `longs` and `ints` for example as Lua turns them indo `doubles` internally, the result from `GetHashCode()` is used instead.
