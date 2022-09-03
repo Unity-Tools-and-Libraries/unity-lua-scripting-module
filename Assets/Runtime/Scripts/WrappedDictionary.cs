@@ -16,7 +16,7 @@ namespace io.github.thisisnozaku.scripting
             this.underlying = underlying;
             foreach(var key in underlying.Keys)
             {
-                var hash = DynValue.FromObject(null, key.GetHashCode()).ToObject().GetHashCode();
+                var hash = key.GetHashCode();
                 resolutionCache[hash] = underlying[key];
             }
         }
