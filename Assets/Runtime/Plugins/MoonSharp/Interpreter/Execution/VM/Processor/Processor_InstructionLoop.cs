@@ -1367,9 +1367,9 @@ namespace MoonSharp.Interpreter.Execution.VM
         private string GetDebugName()
         {
 			string debugName = "";
-			while (m_DebugIndexesStack.Count > 0)
+			for(int i = 0; i < m_DebugIndexesStack.Count; i++)
 			{
-				var next = m_DebugIndexesStack.Pop();
+				var next = m_DebugIndexesStack[i];
 				debugName += String.Format("{0}{1}", next.ToPrintString(), m_DebugIndexesStack.Count > 0 ? "." : "");
 			}
 			return debugName;

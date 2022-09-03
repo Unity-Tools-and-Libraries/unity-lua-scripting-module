@@ -166,6 +166,18 @@ namespace io.github.thisisnozaku.scripting
             });
         }
 
+        [Test]
+        public void IndexingANilValueThrowsAnError()
+        {
+            try
+            {
+                Scripting.EvaluateStringAsScript("return foo.var");
+            } catch(ScriptRuntimeException ex)
+            {
+                Assert.AreEqual("attempt to index a nil value at foo.var.", ex.Message);
+            }
+        }
+
         public class TestType
         {
             public override bool Equals(object obj)
