@@ -60,41 +60,6 @@ namespace io.github.thisisnozaku.scripting
             Assert.IsTrue(Scripting.EvaluateStringAsScript("return value", new KeyValuePair<string, object>("value", true)).Boolean);
         }
 
-        [Test]
-        public void ErrorFunctionInScriptThrows()
-        {
-            Assert.Throws(typeof(ScriptRuntimeException), () =>
-            {
-                Scripting.EvaluateStringAsScript("error('foo')");
-            });
-        }
-
-        [Test]
-        public void TryingToEvaluateNullForScriptThrows()
-        {
-            Assert.Throws(typeof(ArgumentNullException), () =>
-            {
-                Scripting.EvaluateStringAsScript(null);
-            });
-        }
-
-        [Test]
-        public void TryingToEvaluateNullObjectThrows()
-        {
-            Assert.Throws(typeof(ArgumentNullException), () =>
-            {
-                Scripting.Evaluate(null);
-            });
-        }
-
-        [Test]
-        public void TryingToEvaluateWrongTypeThrows()
-        {
-            Assert.Throws(typeof(InvalidOperationException), () =>
-            {
-                Scripting.Evaluate(DynValue.Nil);
-            });
-        }
 
         [Test]
         public void CallbackReceivedContextDictionaryAsArg()
@@ -164,18 +129,6 @@ namespace io.github.thisisnozaku.scripting
             {
                 Assert.AreEqual(new TestType(), Scripting.EvaluateStringAsScript("return foo", Tuple.Create<string, object>("foo", DynValue.NewNumber(1))).ToObject<TestType>());
             });
-        }
-
-        [Test]
-        public void IndexingANilValueThrowsAnError()
-        {
-            try
-            {
-                Scripting.EvaluateStringAsScript("return foo.var");
-            } catch(ScriptRuntimeException ex)
-            {
-                Assert.AreEqual("attempt to index a nil value at foo.var.", ex.Message);
-            }
         }
 
         public class TestType
