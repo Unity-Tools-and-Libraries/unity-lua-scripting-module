@@ -166,6 +166,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 							break;
 						case OpCode.Ret:
 							instructionPtr = ExecRet(i);
+							m_DebugIndexesStack.Clear();
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							if (instructionPtr < 0)
 								goto return_to_native_code;
@@ -225,7 +226,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 						case OpCode.IndexSetN:
 						case OpCode.IndexSetL:
 							instructionPtr = ExecIndexSet(i, instructionPtr);
-							m_DebugIndexesStack.Clear(); // After successful set, clear our debug name.
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							break;
 						case OpCode.Invalid:
