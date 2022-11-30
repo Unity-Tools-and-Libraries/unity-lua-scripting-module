@@ -122,11 +122,6 @@ namespace io.github.thisisnozaku.scripting
                         newContext[property.Key] = property.Value;
                     }
                 }
-
-                foreach (var global in script.Globals.Keys)
-                {
-                    newContext[global] = script.Globals[global];
-                }
                 contextTable = newContext;
             }
             if(ContextCustomizer != null)
