@@ -1,4 +1,4 @@
-# unity-simple-logging
+# unity-lua-scripting-module
 A module to wrap and extends the Moonsharp Lua scripting engine.
 
 ## Adding to your project via Unity Package Manager
