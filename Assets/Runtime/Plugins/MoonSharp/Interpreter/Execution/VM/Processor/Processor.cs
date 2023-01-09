@@ -50,7 +50,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 		public DynValue Call(DynValue function, DynValue[] args)
 		{
 			List<Processor> coroutinesStack = m_Parent != null ? m_Parent.m_CoroutinesStack : this.m_CoroutinesStack;
-
+			m_DebugIndexesStack.Clear();
 			if (coroutinesStack.Count > 0 && coroutinesStack[coroutinesStack.Count - 1] != this)
 				return coroutinesStack[coroutinesStack.Count - 1].Call(function, args);
 
