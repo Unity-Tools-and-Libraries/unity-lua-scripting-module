@@ -42,7 +42,7 @@ namespace io.github.thisisnozaku.scripting
                 Assert.AreEqual("attempt to index a nil value at 'foo.bar.baz'", ex.Message);
             }
         }
-        
+
         [Test]
         public void ErrorMessagePointsAtOnlyWhereErrorOccurred()
         {
@@ -105,7 +105,19 @@ namespace io.github.thisisnozaku.scripting
             {
                 Scripting.EvaluateStringAsScript("foo()");
             });
-            Assert.AreEqual("Attempted to call a nil value near 'foo'", thrown.Message);
+            Assert.AreEqual("Attempted to call a nil value near 'foo()'", thrown.Message);
+
+            thrown = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                    Scripting.EvaluateStringAsScript("bar = 1; foo(bar)");
+            });
+            Assert.AreEqual("Attempted to call a nil value near 'foo(bar)'", thrown.Message);
+
+            thrown = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                Scripting.EvaluateStringAsScript("bar = 1; foo(bar, bin, bon, ban)");
+            });
+            Assert.AreEqual("Attempted to call a nil value near 'foo(bar, bin, bon, ban)'", thrown.Message);
         }
     }
 }

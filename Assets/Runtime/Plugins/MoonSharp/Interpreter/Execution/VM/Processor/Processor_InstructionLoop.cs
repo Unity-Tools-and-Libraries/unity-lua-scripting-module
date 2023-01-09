@@ -63,6 +63,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 							break;
 						case OpCode.Literal:
 							m_ValueStack.Push(i.Value);
+							m_DebugIndexesStack.Push(Tuple.Create<string, DynValue>("literal", i.Value));
 							break;
 						case OpCode.Add:
 							instructionPtr = ExecAdd(i, instructionPtr);
@@ -639,6 +640,19 @@ namespace MoonSharp.Interpreter.Execution.VM
 
 			// unpacks last tuple arguments to simplify a lot of code down under
 			var argsList = CreateArgsListForFunctionCall(numargs, 1);
+			if (numargs > 0)
+			{
+				var debugArgs = new List<Tuple<string, DynValue>>();
+				for (int i = 0; i < numargs; i++)
+				{
+					debugArgs.Add(m_DebugIndexesStack.Pop());
+				}
+				m_DebugIndexesStack.Push(Tuple.Create("args", DynValue.NewNumber(numargs)));
+				for (int i = 0; i < numargs; i++)
+				{
+					m_DebugIndexesStack.Push(debugArgs[i]);
+				}
+			}
 
 			for (int i = 0; i < I.SymbolList.Length; i++)
 			{
@@ -672,7 +686,9 @@ namespace MoonSharp.Interpreter.Execution.VM
 			CallbackFunction continuation = null, bool thisCall = false, string debugText = null, DynValue unwindHandler = null)
 		{
 			DynValue fn = m_ValueStack.Peek(argsCount);
-			CallStackItemFlags flags = (thisCall ? CallStackItemFlags.MethodCall : CallStackItemFlags.None);
+			var debugArgs = new List<Tuple<string, DynValue>>();
+
+            CallStackItemFlags flags = (thisCall ? CallStackItemFlags.MethodCall : CallStackItemFlags.None);
 
 			// if TCO threshold reached
 			if ((m_ExecutionStack.Count > this.m_Script.Options.TailCallOptimizationThreshold && m_ExecutionStack.Count > 1)
@@ -764,9 +780,18 @@ namespace MoonSharp.Interpreter.Execution.VM
 				return Internal_ExecCall(argsCount + 1, instructionPtr, handler, continuation);
 			}
 
-			
+			for (int i = 0; i < argsCount; i++)
+			{
+				debugArgs.Add(m_DebugIndexesStack.Pop());
+			}
+			m_DebugIndexesStack.Push(Tuple.Create("args", DynValue.NewNumber(argsCount)));
+			for (int i = argsCount - 1; i >= 0; i--)
+			{
+				m_DebugIndexesStack.Push(debugArgs[i]);
+			}
 
-			throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, GetDebugName());
+
+			throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, GetDebugName("call"));
 		}
 
 		private int PerformTCO(int instructionPtr, int argsCount)
@@ -1262,7 +1287,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					h = GetMetamethodRaw(obj, "__newindex");
 
 					if (h == null || h.IsNil())
-						throw ScriptRuntimeException.IndexType(obj, GetDebugName());
+						throw ScriptRuntimeException.IndexType(obj, GetDebugName("index"));
 				}
 
 				if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
@@ -1297,7 +1322,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 			DynValue originalIdx = i.Value ?? m_ValueStack.Pop();
 			DynValue idx = originalIdx.ToScalar();
 			DynValue obj = m_ValueStack.Pop().ToScalar();
-			m_DebugIndexesStack.Push(idx);
+			m_DebugIndexesStack.Push(Tuple.Create("index", idx));
 
 			DynValue h = null;
 
@@ -1348,7 +1373,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					h = GetMetamethodRaw(obj, "__index");
 
 					if (h == null || h.IsNil())
-						throw ScriptRuntimeException.IndexType(obj, GetDebugName());
+						throw ScriptRuntimeException.IndexType(obj, GetDebugName("index"));
 				}
 
 				if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
@@ -1369,13 +1394,28 @@ namespace MoonSharp.Interpreter.Execution.VM
 			throw ScriptRuntimeException.LoopInIndex();
 		}
 
-        private string GetDebugName()
+        private string GetDebugName(string context)
         {
 			string debugName = "";
 			for(int i = 0; i < m_DebugIndexesStack.Count; i++)
 			{
 				var next = m_DebugIndexesStack[i];
-				debugName += String.Format("{0}{1}", next.ToPrintString(), i < m_DebugIndexesStack.Count - 1 ? "." : "");
+				switch(next.Item1)
+                {
+					case "args":
+						var args = new List<string>();
+						var argIndex = i;
+						for(int a = 1; a <= (int)next.Item2.Number; a++)
+                        {
+							args.Add(m_DebugIndexesStack[argIndex + a].Item2.ToPrintString());
+							i++;
+                        }
+						debugName += String.Format("({0})", string.Join(", ", args));
+						break;
+					default:
+						debugName += String.Format("{1}{0}", next.Item2.ToPrintString(), i > 0 ? "." : "");
+						break;
+				}
 			}
 			return debugName;
 		}

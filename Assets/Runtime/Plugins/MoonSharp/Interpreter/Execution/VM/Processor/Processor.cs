@@ -12,7 +12,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 
 		FastStack<DynValue> m_ValueStack = new FastStack<DynValue>(131072);
 		FastStack<CallStackItem> m_ExecutionStack = new FastStack<CallStackItem>(131072);
-		FastStack<DynValue> m_DebugIndexesStack = new FastStack<DynValue>(1000);
+		FastStack<Tuple<string, DynValue>> m_DebugIndexesStack = new FastStack<Tuple<string, DynValue>>(100);
 		List<Processor> m_CoroutinesStack;
 
 		Table m_GlobalTable;
