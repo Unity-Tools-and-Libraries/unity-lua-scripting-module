@@ -32,6 +32,15 @@ namespace io.github.thisisnozaku.scripting
             {
                 Assert.AreEqual("attempt to index a nil value at 'foo.var'", ex.Message);
             }
+            try
+            {
+                Scripting.EvaluateStringAsScript("foo = {}; foo.bar = nil; return foo.bar.baz;");
+
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                Assert.AreEqual("attempt to index a nil value at 'foo.bar.baz'", ex.Message);
+            }
         }
         
         [Test]

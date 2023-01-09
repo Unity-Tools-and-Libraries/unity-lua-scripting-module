@@ -21,6 +21,8 @@ namespace MoonSharp.Interpreter.Execution.VM
 			long executedInstructions = 0;
 			bool canAutoYield = (AutoYieldCounter > 0) && m_CanYield && (this.State != CoroutineState.Main);
 
+			m_DebugIndexesStack.Clear();
+
 			repeat_execution:
 
 			try
@@ -226,6 +228,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 						case OpCode.IndexSetN:
 						case OpCode.IndexSetL:
 							instructionPtr = ExecIndexSet(i, instructionPtr);
+							m_DebugIndexesStack.Clear();
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							break;
 						case OpCode.Invalid:
