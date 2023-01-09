@@ -761,7 +761,9 @@ namespace MoonSharp.Interpreter.Execution.VM
 				return Internal_ExecCall(argsCount + 1, instructionPtr, handler, continuation);
 			}
 
-			throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, debugText);
+			
+
+			throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, GetDebugName());
 		}
 
 		private int PerformTCO(int instructionPtr, int argsCount)
@@ -1370,7 +1372,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 			for(int i = 0; i < m_DebugIndexesStack.Count; i++)
 			{
 				var next = m_DebugIndexesStack[i];
-				debugName += String.Format("{0}{1}", next.ToPrintString(), m_DebugIndexesStack.Count > 0 ? "." : "");
+				debugName += String.Format("{0}{1}", next.ToPrintString(), i < m_DebugIndexesStack.Count - 1 ? "." : "");
 			}
 			return debugName;
 		}

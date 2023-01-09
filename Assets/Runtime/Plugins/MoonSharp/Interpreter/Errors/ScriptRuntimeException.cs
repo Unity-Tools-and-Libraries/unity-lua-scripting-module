@@ -266,7 +266,7 @@ namespace MoonSharp.Interpreter
 		/// </returns>
 		public static ScriptRuntimeException IndexType(DynValue obj, string debugName)
 		{
-			return new ScriptRuntimeException("attempt to index a {0} value at {1}", obj.Type.ToLuaTypeString(), debugName);
+			return new ScriptRuntimeException("attempt to index a {0} value at '{1}'", obj.Type.ToLuaTypeString(), debugName);
 		}
 
 		/// <summary>
@@ -478,9 +478,9 @@ namespace MoonSharp.Interpreter
 			string functype = type.ToErrorTypeString();
 
 			if (debugText != null)
-				return new ScriptRuntimeException("attempt to call a {0} value near '{1}'", functype, debugText);
+				return new ScriptRuntimeException("Attempted to call a {0} value near '{1}'", functype, debugText);
 			else
-				return new ScriptRuntimeException("attempt to call a {0} value", functype);
+				return new ScriptRuntimeException("Attempted to call a {0} value", functype);
 		}
 
 

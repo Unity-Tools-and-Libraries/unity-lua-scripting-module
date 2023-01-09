@@ -30,7 +30,7 @@ namespace io.github.thisisnozaku.scripting
             }
             catch (ScriptRuntimeException ex)
             {
-                Assert.AreEqual("attempt to index a nil value at foo.var.", ex.Message);
+                Assert.AreEqual("attempt to index a nil value at 'foo.var'", ex.Message);
             }
         }
         
@@ -49,7 +49,7 @@ namespace io.github.thisisnozaku.scripting
             }
             catch (ScriptRuntimeException ex)
             {
-                Assert.AreEqual("attempt to index a nil value at foo.var.", ex.Message);
+                Assert.AreEqual("attempt to index a nil value at 'foo.var'", ex.Message);
             }
         }
 
@@ -89,6 +89,14 @@ namespace io.github.thisisnozaku.scripting
             });
         }
 
-
+        [Test]
+        public void TryingToCallNonFunctionThrows()
+        {
+            var thrown = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                Scripting.EvaluateStringAsScript("foo()");
+            });
+            Assert.AreEqual("Attempted to call a nil value near 'foo'", thrown.Message);
+        }
     }
 }
