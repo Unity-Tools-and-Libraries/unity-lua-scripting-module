@@ -30,7 +30,7 @@ namespace io.github.thisisnozaku.scripting
             }
             catch (ScriptRuntimeException ex)
             {
-                Assert.AreEqual("attempt to index a nil value at 'foo.var'", ex.Message);
+                Assert.AreEqual("attempt to index a nil value at 'return foo.var' from 1:0 to 1:14", ex.Message);
             }
             try
             {
@@ -39,7 +39,7 @@ namespace io.github.thisisnozaku.scripting
             }
             catch (ScriptRuntimeException ex)
             {
-                Assert.AreEqual("attempt to index a nil value at 'foo.bar.baz'", ex.Message);
+                Assert.AreEqual("attempt to index a nil value at 'return foo.bar.baz' from 1:25 to 1:43", ex.Message);
             }
         }
 
@@ -58,7 +58,7 @@ namespace io.github.thisisnozaku.scripting
             }
             catch (ScriptRuntimeException ex)
             {
-                Assert.AreEqual("attempt to index a nil value at 'foo.var'", ex.Message);
+                Assert.AreEqual("attempt to index a nil value at 'return foo.var' from 5:0 to 5:14", ex.Message);
             }
         }
 
@@ -103,21 +103,29 @@ namespace io.github.thisisnozaku.scripting
         {
             var thrown = Assert.Throws<ScriptRuntimeException>(() =>
             {
-                Scripting.EvaluateStringAsScript("foo()");
+                Scripting.EvaluateStringAsScript("return 10 * math.pwr(1, 2)");
             });
-            Assert.AreEqual("Attempted to call a nil value near 'foo()'", thrown.Message);
+            Assert.AreEqual("Attempted to call a nil value near 'return 10 * math.pwr(1, 2)' from 1:0 to 1:26", thrown.Message);
 
             thrown = Assert.Throws<ScriptRuntimeException>(() =>
             {
-                    Scripting.EvaluateStringAsScript("bar = 1; foo(bar)");
+                Scripting.EvaluateStringAsScript("return foo()");
             });
-            Assert.AreEqual("Attempted to call a nil value near 'foo(bar)'", thrown.Message);
+            Assert.AreEqual("Attempted to call a nil value near 'return foo()' from 1:0 to 1:12", thrown.Message);
+
+            thrown = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                    Scripting.EvaluateStringAsScript("foo(bar)");
+            });
+            Assert.AreEqual("Attempted to call a nil value near 'foo(bar)' from 1:3 to 1:8", thrown.Message);
 
             thrown = Assert.Throws<ScriptRuntimeException>(() =>
             {
                 Scripting.EvaluateStringAsScript("bar = 1; foo(bar, bin, bon, ban)");
             });
-            Assert.AreEqual("Attempted to call a nil value near 'foo(bar, bin, bon, ban)'", thrown.Message);
+            Assert.AreEqual("Attempted to call a nil value near 'foo(bar, bin, bon, ban)' from 1:12 to 1:32", thrown.Message);
+
+            
         }
     }
 }

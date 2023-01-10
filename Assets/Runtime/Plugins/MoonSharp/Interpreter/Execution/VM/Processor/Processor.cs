@@ -12,7 +12,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 
 		FastStack<DynValue> m_ValueStack = new FastStack<DynValue>(131072);
 		FastStack<CallStackItem> m_ExecutionStack = new FastStack<CallStackItem>(131072);
-		FastStack<Tuple<string, DynValue>> m_DebugIndexesStack = new FastStack<Tuple<string, DynValue>>(100);
 		List<Processor> m_CoroutinesStack;
 
 		Table m_GlobalTable;
@@ -50,7 +49,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 		public DynValue Call(DynValue function, DynValue[] args)
 		{
 			List<Processor> coroutinesStack = m_Parent != null ? m_Parent.m_CoroutinesStack : this.m_CoroutinesStack;
-			m_DebugIndexesStack.Clear();
 			if (coroutinesStack.Count > 0 && coroutinesStack[coroutinesStack.Count - 1] != this)
 				return coroutinesStack[coroutinesStack.Count - 1].Call(function, args);
 

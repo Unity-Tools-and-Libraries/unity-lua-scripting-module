@@ -1,6 +1,7 @@
 using io.github.thisisnozaku.scripting.context;
 using io.github.thisisnozaku.scripting.types;
 using MoonSharp.Interpreter;
+using MoonSharp.VsCodeDebugger.DebuggerLogic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace io.github.thisisnozaku.scripting
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
             script = new Script(CoreModules.Preset_HardSandbox);
+            script.AttachDebugger(new AsyncDebugger(script, sc => null, ""));
             Configure(configurationFlags);
         }
 

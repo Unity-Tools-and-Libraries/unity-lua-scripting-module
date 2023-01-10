@@ -21,8 +21,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 			long executedInstructions = 0;
 			bool canAutoYield = (AutoYieldCounter > 0) && m_CanYield && (this.State != CoroutineState.Main);
 
-			m_DebugIndexesStack.Clear();
-
 			repeat_execution:
 
 			try
@@ -63,7 +61,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 							break;
 						case OpCode.Literal:
 							m_ValueStack.Push(i.Value);
-							m_DebugIndexesStack.Push(Tuple.Create<string, DynValue>("literal", i.Value));
 							break;
 						case OpCode.Add:
 							instructionPtr = ExecAdd(i, instructionPtr);
@@ -169,7 +166,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 							break;
 						case OpCode.Ret:
 							instructionPtr = ExecRet(i);
-							m_DebugIndexesStack.Clear();
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							if (instructionPtr < 0)
 								goto return_to_native_code;
@@ -229,7 +225,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 						case OpCode.IndexSetN:
 						case OpCode.IndexSetL:
 							instructionPtr = ExecIndexSet(i, instructionPtr);
-							m_DebugIndexesStack.Clear();
 							if (instructionPtr == YIELD_SPECIAL_TRAP) goto yield_to_calling_coroutine;
 							break;
 						case OpCode.Invalid:
@@ -640,19 +635,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 
 			// unpacks last tuple arguments to simplify a lot of code down under
 			var argsList = CreateArgsListForFunctionCall(numargs, 1);
-			if (numargs > 0)
-			{
-				var debugArgs = new List<Tuple<string, DynValue>>();
-				for (int i = 0; i < numargs; i++)
-				{
-					debugArgs.Add(m_DebugIndexesStack.Pop());
-				}
-				m_DebugIndexesStack.Push(Tuple.Create("args", DynValue.NewNumber(numargs)));
-				for (int i = 0; i < numargs; i++)
-				{
-					m_DebugIndexesStack.Push(debugArgs[i]);
-				}
-			}
 
 			for (int i = 0; i < I.SymbolList.Length; i++)
 			{
@@ -780,18 +762,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 				return Internal_ExecCall(argsCount + 1, instructionPtr, handler, continuation);
 			}
 
-			for (int i = 0; i < argsCount; i++)
-			{
-				debugArgs.Add(m_DebugIndexesStack.Pop());
-			}
-			m_DebugIndexesStack.Push(Tuple.Create("args", DynValue.NewNumber(argsCount)));
-			for (int i = argsCount - 1; i >= 0; i--)
-			{
-				m_DebugIndexesStack.Push(debugArgs[i]);
-			}
-
-
-			throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, GetDebugName("call"));
+			throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, GetDebugName(instructionPtr));
 		}
 
 		private int PerformTCO(int instructionPtr, int argsCount)
@@ -1287,7 +1258,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					h = GetMetamethodRaw(obj, "__newindex");
 
 					if (h == null || h.IsNil())
-						throw ScriptRuntimeException.IndexType(obj, GetDebugName("index"));
+						throw ScriptRuntimeException.IndexType(obj, GetDebugName(instructionPtr));
 				}
 
 				if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
@@ -1322,7 +1293,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 			DynValue originalIdx = i.Value ?? m_ValueStack.Pop();
 			DynValue idx = originalIdx.ToScalar();
 			DynValue obj = m_ValueStack.Pop().ToScalar();
-			m_DebugIndexesStack.Push(Tuple.Create("index", idx));
 
 			DynValue h = null;
 
@@ -1373,7 +1343,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					h = GetMetamethodRaw(obj, "__index");
 
 					if (h == null || h.IsNil())
-						throw ScriptRuntimeException.IndexType(obj, GetDebugName("index"));
+						throw ScriptRuntimeException.IndexType(obj, GetDebugName(instructionPtr));
 				}
 
 				if (h.Type == DataType.Function || h.Type == DataType.ClrFunction)
@@ -1394,30 +1364,46 @@ namespace MoonSharp.Interpreter.Execution.VM
 			throw ScriptRuntimeException.LoopInIndex();
 		}
 
-        private string GetDebugName(string context)
+        private string GetDebugName(int instructionPointer)
         {
-			string debugName = "";
-			for(int i = 0; i < m_DebugIndexesStack.Count; i++)
-			{
-				var next = m_DebugIndexesStack[i];
-				switch(next.Item1)
+			var callOp = m_RootChunk.Code[instructionPointer - 1];
+			string snippet = "";
+			var source = GetScript().GetSourceCode(callOp.SourceCodeRef.SourceIdx);
+
+			int fromLine = callOp.SourceCodeRef.FromLine ,
+				fromColumn = callOp.SourceCodeRef.FromChar,
+				toLine = callOp.SourceCodeRef.ToLine,
+				toColumn = callOp.SourceCodeRef.ToChar;
+
+			var thirdLastOp = m_RootChunk.Code[m_RootChunk.Code.Count - 3];
+			if(thirdLastOp.OpCode != OpCode.Ret || thirdLastOp.NumVal != 1)
+            {
+				// Walk up the code stack, skip a number of indexes equal to the number on the call op and skip that many indexes
+				int currentIndex = instructionPointer - 2;
+				var currentOp = callOp;
+				int numberSkipped = 0;
+				while (true)
                 {
-					case "args":
-						var args = new List<string>();
-						var argIndex = i;
-						for(int a = 1; a <= (int)next.Item2.Number; a++)
-                        {
-							args.Add(m_DebugIndexesStack[argIndex + a].Item2.ToPrintString());
-							i++;
-                        }
-						debugName += String.Format("({0})", string.Join(", ", args));
-						break;
-					default:
-						debugName += String.Format("{1}{0}", next.Item2.ToPrintString(), i > 0 ? "." : "");
-						break;
-				}
-			}
-			return debugName;
+					currentOp = m_RootChunk.Code[currentIndex];
+					if (currentOp.OpCode == OpCode.Index || currentOp.OpCode == OpCode.IndexL || currentOp.OpCode == OpCode.IndexN)
+					{
+						if (numberSkipped == callOp.NumVal)
+						{
+							break;
+						}
+						numberSkipped++;
+					}
+					currentIndex--;
+                }
+				fromLine = currentOp.SourceCodeRef.FromLine;
+				fromColumn = currentOp.SourceCodeRef.FromChar;
+				snippet += currentOp.Value.ToPrintString();
+            }
+
+			snippet += source.GetCodeSnippet(callOp.SourceCodeRef);
+
+			return String.Format("'{0}' from {1}:{2} to {3}:{4}", snippet, callOp.SourceCodeRef.FromLine,
+				callOp.SourceCodeRef.FromChar, callOp.SourceCodeRef.ToLine, callOp.SourceCodeRef.ToChar);
 		}
     }
 }
