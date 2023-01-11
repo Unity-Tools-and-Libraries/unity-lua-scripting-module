@@ -19,8 +19,7 @@ namespace io.github.thisisnozaku.scripting
 
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
-            script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods);
-            script.AttachDebugger(new AsyncDebugger(script, sc => null, ""));
+            script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods | CoreModules.Metatables);
             Configure(configurationFlags);
         }
 
