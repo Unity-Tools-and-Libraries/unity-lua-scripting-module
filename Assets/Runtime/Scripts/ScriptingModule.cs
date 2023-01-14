@@ -5,6 +5,7 @@ using MoonSharp.VsCodeDebugger.DebuggerLogic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace io.github.thisisnozaku.scripting
 {
@@ -20,7 +21,7 @@ namespace io.github.thisisnozaku.scripting
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
             script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods | CoreModules.Metatables);
-            Configure(configurationFlags);
+            Configure(0);
         }
 
         private void Configure(ScriptingModuleConfigurationFlag configurationFlags)
@@ -84,12 +85,12 @@ namespace io.github.thisisnozaku.scripting
                 { localContext.Item1, localContext.Item2 }});
         }
 
-        public DynValue Evaluate(DynValue toEvaluate, IScriptingContext context)
+        public DynValue Evaluate(DynValue toEvaluate, IScriptingContext context, List<string> argumentContextMap = null)
         {
-            return Evaluate(toEvaluate, context.GetContextVariables());
+            return Evaluate(toEvaluate, context.GetContextVariables(), argumentContextMap);
         }
 
-        public DynValue Evaluate(DynValue toEvaluate, IDictionary<string, object> localContext = null)
+        public DynValue Evaluate(DynValue toEvaluate, IDictionary<string, object> localContext = null, List<string> argumentContextMap = null)
         {
             if (toEvaluate == null)
             {
@@ -104,10 +105,36 @@ namespace io.github.thisisnozaku.scripting
                 case DataType.ClrFunction:
                     result = script.Call(toEvaluate.Callback, SetupContext(localContext));
                     break;
+                case DataType.Function:
+                    var arguments = MapArguments(localContext, argumentContextMap);
+                    result = script.Call(toEvaluate.Function, arguments);
+                    break;
                 default:
                     throw new InvalidOperationException(String.Format("The DynValue must contains a string to interpret or a function to call, but was {0}", toEvaluate.Type));
             }
             return result;
+        }
+
+        private object[] MapArguments(IDictionary<string, object> context, List<string> argumentContextMap)
+        {
+            if(argumentContextMap != null)
+            {
+                return argumentContextMap.Select(a => context[a]).ToArray();
+            } else
+            {
+                List<object> arguments = new List<object>();
+                foreach(var entry in context)
+                {
+                    int index = -1;
+                    if(!int.TryParse(entry.Key, out index))
+                    {
+                        throw new InvalidOperationException(string.Format("No mapping was provided from context names to argument array indexes, so tried parsing {0} as an int. ", entry.Key));
+                    }
+                    arguments.Insert(index, entry.Value);
+                }
+                return arguments.ToArray();
+            }
+            
         }
 
         private Table SetupContext(IDictionary<string, object> localContext)

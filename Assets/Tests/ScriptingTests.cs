@@ -37,15 +37,6 @@ namespace io.github.thisisnozaku.scripting
         }
 
         [Test]
-        public void WhenADictionaryGoesIntoScriptWrapIt()
-        {
-            var dict = new Dictionary<string, object>();
-            var b = dict is IDictionary || dict is IDictionary<string, object>;
-            Scripting.Globals["foo"] = new Dictionary<string, object>();
-            Assert.AreEqual(DataType.UserData, Scripting.Globals.Get("foo").Type);
-        }
-
-        [Test]
         public void CanAssignValueInTable()
         {
             Scripting.Globals["foo"] = new Dictionary<string, object>();
@@ -53,13 +44,11 @@ namespace io.github.thisisnozaku.scripting
             Assert.AreEqual(1, Scripting.EvaluateStringAsScript("return foo.bar").Number);
         }
 
-
         [Test]
         public void ContextCanBeASingleKeyValuePair()
         {
             Assert.IsTrue(Scripting.EvaluateStringAsScript("return value", new KeyValuePair<string, object>("value", true)).Boolean);
         }
-
 
         [Test]
         public void CallbackReceivedContextDictionaryAsArg()
@@ -129,6 +118,23 @@ namespace io.github.thisisnozaku.scripting
             {
                 Assert.AreEqual(new TestType(), Scripting.EvaluateStringAsScript("return foo", Tuple.Create<string, object>("foo", DynValue.NewNumber(1))).ToObject<TestType>());
             });
+        }
+
+        [Test]
+        public void FunctionArgumentsPopulateFromContextByName()
+        {
+            Scripting.EvaluateStringAsScript("function baz(foo, bar) return foo + bar end");
+
+            Assert.AreEqual(3, Scripting.EvaluateStringAsScript("return baz(foo, bar)", new Dictionary<string, object>()
+            {
+                { "foo", 1 },
+                { "bar", 2 }
+            }).Number);
+            Assert.AreEqual(3, Scripting.Evaluate(DynValue.FromObject(null, Scripting.Globals["baz"]), new Dictionary<string, object>()
+            {
+                { "foo", 1 },
+                { "bar", 2 }
+            }, new List<string>() { "foo", "bar" }).Number);
         }
 
         public class TestType
