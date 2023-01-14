@@ -1090,7 +1090,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 			{
 				int ip = Internal_InvokeBinaryMetaMethod(l, r, "__lt", instructionPtr);
 				if (ip < 0)
-					throw ScriptRuntimeException.CompareInvalidType(l, r);
+					throw ScriptRuntimeException.CompareInvalidType(l, r, GetDebugName(instructionPtr));
 				else
 					return ip;
 			}
@@ -1122,7 +1122,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					ip = Internal_InvokeBinaryMetaMethod(r, l, "__lt", instructionPtr, DynValue.True);
 
 					if (ip < 0)
-						throw ScriptRuntimeException.CompareInvalidType(l, r);
+						throw ScriptRuntimeException.CompareInvalidType(l, r, GetDebugName(instructionPtr));
 					else
 						return ip;
 				}
@@ -1374,31 +1374,6 @@ namespace MoonSharp.Interpreter.Execution.VM
 				fromColumn = callOp.SourceCodeRef.FromChar,
 				toLine = callOp.SourceCodeRef.ToLine,
 				toColumn = callOp.SourceCodeRef.ToChar;
-
-			var thirdLastOp = m_RootChunk.Code[m_RootChunk.Code.Count - 3];
-			if(thirdLastOp.OpCode != OpCode.Ret || thirdLastOp.NumVal != 1)
-            {
-				// Walk up the code stack, skip a number of indexes equal to the number on the call op and skip that many indexes
-				int currentIndex = instructionPointer - 2;
-				var currentOp = callOp;
-				int numberSkipped = 0;
-				while (true)
-                {
-					currentOp = m_RootChunk.Code[currentIndex];
-					if (currentOp.OpCode == OpCode.Index || currentOp.OpCode == OpCode.IndexL || currentOp.OpCode == OpCode.IndexN)
-					{
-						if (numberSkipped == callOp.NumVal)
-						{
-							break;
-						}
-						numberSkipped++;
-					}
-					currentIndex--;
-                }
-				fromLine = currentOp.SourceCodeRef.FromLine;
-				fromColumn = currentOp.SourceCodeRef.FromChar;
-				snippet += currentOp.Value.ToPrintString();
-            }
 
 			snippet += source.GetCodeSnippet(callOp.SourceCodeRef);
 

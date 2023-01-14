@@ -95,7 +95,7 @@ namespace MoonSharp.Interpreter.CoreLib
 					if (a.Type == DataType.String && b.Type == DataType.String)
 						return a.String.CompareTo(b.String);
 
-					throw ScriptRuntimeException.CompareInvalidType(a, b);
+					throw ScriptRuntimeException.CompareInvalidType(a, b, "n/a");
 				}
 				else
 				{

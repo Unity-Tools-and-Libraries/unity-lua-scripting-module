@@ -111,12 +111,13 @@ namespace MoonSharp.Interpreter
 		/// <param name="l">The left operand.</param>
 		/// <param name="r">The right operand.</param>
 		/// <returns>The exception to be raised.</returns>
-		public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
+		public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r, string debugName)
 		{
 			if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
-				return new ScriptRuntimeException("attempt to compare two {0} values", l.Type.ToLuaTypeString());
+				return new ScriptRuntimeException("attempt to compare two {0} values near '{1}'", l.Type.ToLuaTypeString(), debugName);
 			else
-				return new ScriptRuntimeException("attempt to compare {0} with {1}", l.Type.ToLuaTypeString(), r.Type.ToLuaTypeString());
+				return new ScriptRuntimeException("attempt to compare {0} with {1} near '{2}'", l.Type.ToLuaTypeString(), r.Type.ToLuaTypeString()
+					, debugName);
 		}
 
 		/// <summary>

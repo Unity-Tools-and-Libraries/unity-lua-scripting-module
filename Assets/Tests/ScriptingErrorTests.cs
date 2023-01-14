@@ -117,13 +117,13 @@ namespace io.github.thisisnozaku.scripting
             {
                     Scripting.EvaluateStringAsScript("foo(bar)");
             });
-            Assert.AreEqual("Attempted to call a nil value near 'foo(bar)' from 1:3 to 1:8", thrown.Message);
+            Assert.AreEqual("Attempted to call a nil value near '(bar)' from 1:3 to 1:8", thrown.Message);
 
             thrown = Assert.Throws<ScriptRuntimeException>(() =>
             {
                 Scripting.EvaluateStringAsScript("bar = 1; foo(bar, bin, bon, ban)");
             });
-            Assert.AreEqual("Attempted to call a nil value near 'foo(bar, bin, bon, ban)' from 1:12 to 1:32", thrown.Message);
+            Assert.AreEqual("Attempted to call a nil value near '(bar, bin, bon, ban)' from 1:12 to 1:32", thrown.Message);
 
             
         }
