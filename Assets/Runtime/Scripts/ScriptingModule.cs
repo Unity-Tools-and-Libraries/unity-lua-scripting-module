@@ -21,7 +21,7 @@ namespace io.github.thisisnozaku.scripting
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
             script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods | CoreModules.Metatables);
-            Configure(0);
+            Configure(ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING);
         }
 
         private void Configure(ScriptingModuleConfigurationFlag configurationFlags)
