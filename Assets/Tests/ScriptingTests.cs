@@ -137,6 +137,42 @@ namespace io.github.thisisnozaku.scripting
             }, new List<string>() { "foo", "bar" }).Number);
         }
 
+        [Test]
+        public void ClrFunctionCanReceiveContextVariable()
+        {
+            bool called = false;
+            Scripting.Globals["foo"] = DynValue.FromObject(null, (Action<Table>)((ctx) => {
+                called = true;
+                Assert.AreEqual(1, ctx["bar"]);
+                Assert.AreEqual(2, ctx["baz"]);
+            }));
+
+            Scripting.Evaluate(Scripting.Globals.Get("foo"), new Dictionary<string, object>()
+                {
+                    { "bar", 1 },
+                    { "baz", 2 }
+                });
+            Assert.IsTrue(called);
+        }
+
+        [Test]
+        public void ClrFunctionArgumentsCanPopulateFromContextByIndex()
+        {
+            bool called = false;
+            Scripting.Globals["foo"] = DynValue.FromObject(null, (Action<object, object>)((baz, bar) => {
+                called = true;
+                Assert.AreEqual(1, bar);
+                Assert.AreEqual(2, baz);
+            }));
+
+            Scripting.Evaluate(Scripting.Globals.Get("foo"), new Dictionary<string, object>()
+                {
+                    { "bar", 1 },
+                    { "baz", 2 }
+                }, new List<string>() { "baz", "bar" });
+            Assert.IsTrue(called);
+        }
+
         public class TestType
         {
             public override bool Equals(object obj)

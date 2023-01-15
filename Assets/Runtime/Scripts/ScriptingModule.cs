@@ -103,8 +103,17 @@ namespace io.github.thisisnozaku.scripting
                     result = script.DoString(toEvaluate.String, SetupContext(localContext));
                     break;
                 case DataType.ClrFunction:
-                    result = script.Call(toEvaluate.Callback, SetupContext(localContext));
-                    break;
+                    {
+                        if(argumentContextMap != null)
+                        {
+                            var args = MapArguments(localContext, argumentContextMap);
+                            result = script.Call(toEvaluate.Callback, args);
+                        } else
+                        {
+                            result = script.Call(toEvaluate, SetupContext(localContext));
+                        }
+                        break;
+                    }
                 case DataType.Function:
                     var arguments = MapArguments(localContext, argumentContextMap);
                     result = script.Call(toEvaluate.Function, arguments);
@@ -157,6 +166,7 @@ namespace io.github.thisisnozaku.scripting
                 }
                 contextTable = newContext;
             }
+            
             if(ContextCustomizer != null)
             {
                 contextTable = ContextCustomizer(contextTable);
