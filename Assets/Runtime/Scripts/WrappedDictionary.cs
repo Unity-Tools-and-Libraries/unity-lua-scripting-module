@@ -14,7 +14,7 @@ namespace io.github.thisisnozaku.scripting
         public WrappedDictionary(IDictionary underlying)
         {
             this.underlying = underlying;
-            foreach(var key in underlying.Keys)
+            foreach (var key in underlying.Keys)
             {
                 var hash = key.GetHashCode();
                 resolutionCache[hash] = underlying[key];
@@ -32,9 +32,44 @@ namespace io.github.thisisnozaku.scripting
 
         }
 
+        private Func<DynValue> NextFunction(Script script, IDictionaryEnumerator enumerator, bool numericOnly = false)
+        {
+            Func<DynValue> next = null;
+            next = () =>
+            {
+                while (enumerator.MoveNext())
+                {
+                    int parsed = 0;
+                    if (!numericOnly || (enumerator.Entry.Key is string && int.TryParse(enumerator.Entry.Key as string, out parsed)))
+                    {
+                        return DynValue.NewTuple(//DynValue.FromObject(script, next),
+                            DynValue.FromObject(script, enumerator.Entry.Key),
+                            DynValue.FromObject(script, enumerator.Entry.Value));
+                    }
+                }
+                return DynValue.Nil;
+            };
+            return next;
+        }
+
         public DynValue MetaIndex(Script script, string metaname)
         {
-            throw new NotImplementedException();
+            switch (metaname)
+            {
+                case "__pairs":
+                    {
+                        IDictionaryEnumerator enumerator = underlying.GetEnumerator();
+                        return DynValue.FromObject(script, (Func<Func<DynValue>>)(() => NextFunction(script, enumerator)));
+                    }
+                case "__ipairs":
+                    {
+                        IDictionaryEnumerator enumerator = underlying.GetEnumerator();
+                        return DynValue.FromObject(script, (Func<Func<DynValue>>)(() => NextFunction(script, enumerator, true)));
+                    }
+                default:
+                    throw new NotImplementedException(metaname);
+            }
+
         }
 
         public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing)

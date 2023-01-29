@@ -173,6 +173,32 @@ namespace io.github.thisisnozaku.scripting
             Assert.IsTrue(called);
         }
 
+        [Test]
+        public void CanIterateWrappedDictionaryUsingPairs()
+        {
+            Scripting.Globals["foo"] = DynValue.FromObject(null, new Dictionary<string, object>()
+            {
+                { "1", "one" },
+                { "one", "1" }
+            });
+            Scripting.EvaluateStringAsScript("for k,v in pairs(foo) do _G[k] = v; end");
+            Assert.AreEqual("one", Scripting.Globals.Get("1").String);
+            Assert.AreEqual("1", Scripting.Globals.Get("one").String);
+        }
+
+        [Test]
+        public void CanIterateWrappedDictionaryUsingIpairs()
+        {
+            Scripting.Globals["foo"] = DynValue.FromObject(null, new Dictionary<string, object>()
+            {
+                { "1", "one" },
+                { "one", "1" }
+            });
+            Scripting.EvaluateStringAsScript("for k,v in ipairs(foo) do _G[k] = v; end");
+            Assert.IsTrue(Scripting.Globals.Get("one").IsNil());
+            Assert.AreEqual("one", Scripting.Globals.Get("1").String);
+        }
+
         public class TestType
         {
             public override bool Equals(object obj)
