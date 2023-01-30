@@ -11,7 +11,7 @@ namespace io.github.thisisnozaku.scripting
     {
         private IDictionary underlying;
 
-        public IDictionary Underlying { get; }
+        public IDictionary Underlying => underlying;
         
         public WrappedDictionary(IDictionary underlying)
         {
