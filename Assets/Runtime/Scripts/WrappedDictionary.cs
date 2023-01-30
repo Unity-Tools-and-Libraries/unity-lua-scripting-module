@@ -10,25 +10,17 @@ namespace io.github.thisisnozaku.scripting
     public class WrappedDictionary : IUserDataType
     {
         private IDictionary underlying;
-        private Dictionary<int, object> resolutionCache = new Dictionary<int, object>();
+
+        public IDictionary Underlying { get; }
+        
         public WrappedDictionary(IDictionary underlying)
         {
             this.underlying = underlying;
-            foreach (var key in underlying.Keys)
-            {
-                var hash = key.GetHashCode();
-                resolutionCache[hash] = underlying[key];
-            }
         }
 
         public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
         {
-            var indexHash = index.ToObject().GetHashCode();
-            if (resolutionCache.ContainsKey(indexHash))
-            {
-                return DynValue.FromObject(script, resolutionCache[index.ToObject().GetHashCode()]);
-            }
-            return DynValue.Nil;
+            return DynValue.FromObject(script, underlying[index.ToObject()]);
 
         }
 
@@ -75,7 +67,6 @@ namespace io.github.thisisnozaku.scripting
         public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing)
         {
             underlying[index.ToObject()] = value.ToObject();
-            resolutionCache[index.ToObject().GetHashCode()] = value.ToObject();
             return true;
         }
     }
