@@ -20,8 +20,15 @@ namespace io.github.thisisnozaku.scripting
 
         public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
         {
+            var indexObject = index.ToObject();
+            var keyType = underlying.GetType().GetGenericArguments()[0];
+            if (indexObject != null && indexObject.GetType() != keyType)
+            {
+                throw new ScriptRuntimeException(string.Format("Tried to index a dictionary with a key type of {0} using an actual key of type {1}. To avoid unexpectedly, silently failing to find a value, indexing with the right type is strictly enforced.",
+                    keyType.Name,
+                    indexObject.GetType().Name));
+            }
             return DynValue.FromObject(script, underlying[index.ToObject()]);
-
         }
 
         private Func<DynValue> NextFunction(Script script, IDictionaryEnumerator enumerator, bool numericOnly = false)
