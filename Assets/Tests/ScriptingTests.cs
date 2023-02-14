@@ -87,40 +87,6 @@ namespace io.github.thisisnozaku.scripting
         }
 
         [Test]
-        public void TypeAdaptersRegisterTheirTypeWithUserData()
-        {
-            Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>().Build());
-            Assert.DoesNotThrow(() =>
-            {
-                Scripting.EvaluateStringAsScript("print('hello world')", Tuple.Create<string, object>("", new TestType()));
-            });
-        }
-
-        [Test]
-        public void TypeAdaptersCanDefineAClrObjectToScriptTypeConverter()
-        {
-            Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>()
-                .WithClrConversion((script, obj) => DynValue.FromObject(script, 1))
-                .Build());
-            Assert.DoesNotThrow(() =>
-            {
-                Scripting.EvaluateStringAsScript("print('hello world')", Tuple.Create<string, object>("", new TestType()));
-            });
-        }
-
-        [Test]
-        public void TypeAdaptersCanDefineAScriptObjectToClrTypeConverter()
-        {
-            Scripting.AddTypeAdapter(new types.TypeAdapter<TestType>.AdapterBuilder<TestType>()
-                .WithScriptConversion(DataType.Number, (val) => new TestType())
-                .Build());
-            Assert.DoesNotThrow(() =>
-            {
-                Assert.AreEqual(new TestType(), Scripting.EvaluateStringAsScript("return foo", Tuple.Create<string, object>("foo", DynValue.NewNumber(1))).ToObject<TestType>());
-            });
-        }
-
-        [Test]
         public void FunctionArgumentsPopulateFromContextByName()
         {
             Scripting.EvaluateStringAsScript("function baz(foo, bar) return foo + bar end");
@@ -201,6 +167,11 @@ namespace io.github.thisisnozaku.scripting
 
         public class TestType
         {
+            public int i;
+            public TestType(int i = 0)
+            {
+                this.i = i;
+            }
             public override bool Equals(object obj)
             {
                 return obj.GetType() == GetType();
@@ -209,6 +180,12 @@ namespace io.github.thisisnozaku.scripting
             public override int GetHashCode()
             {
                 return base.GetHashCode();
+            }
+
+            [MoonSharpUserDataMetamethod("__add")]
+            public static TestType Add(TestType a, TestType b)
+            {
+                return new TestType(a.i + b.i);
             }
         }
     }

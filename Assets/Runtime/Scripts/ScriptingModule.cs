@@ -29,29 +29,30 @@ namespace io.github.thisisnozaku.scripting
             if ((configurationFlags & ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING) != 0)
             {
                 UserData.RegisterType<WrappedDictionary>();
-                AddTypeAdapter(new TypeAdapter<IDictionary>.AdapterBuilder<IDictionary>()
+                AddTypeAdapter(new TypeAdapter<IDictionary>.AdapterBuilder()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
 
-                AddTypeAdapter(new TypeAdapter<IDictionary<string, object>>.AdapterBuilder<IDictionary<string, object>>()
+                AddTypeAdapter(new TypeAdapter<IDictionary<string, object>>.AdapterBuilder()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
-                AddTypeAdapter(new TypeAdapter<Dictionary<string, object>>.AdapterBuilder<Dictionary<string, object>>()
-                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
-
-                AddTypeAdapter(new TypeAdapter<IDictionary<int, object>>.AdapterBuilder<IDictionary<int, object>>()
-                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
-                AddTypeAdapter(new TypeAdapter<Dictionary<int, object>>.AdapterBuilder<Dictionary<int, object>>()
+                AddTypeAdapter(new TypeAdapter<Dictionary<string, object>>.AdapterBuilder()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
 
-                AddTypeAdapter(new TypeAdapter<IDictionary<long, object>>.AdapterBuilder<IDictionary<long, object>>()
+                AddTypeAdapter(new TypeAdapter<IDictionary<int, object>>.AdapterBuilder()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
-                AddTypeAdapter(new TypeAdapter<Dictionary<long, object>>.AdapterBuilder<Dictionary<long, object>>()
+                AddTypeAdapter(new TypeAdapter<Dictionary<int, object>>.AdapterBuilder()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+
+                AddTypeAdapter(new TypeAdapter<IDictionary<long, object>>.AdapterBuilder()
+                    .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
+                AddTypeAdapter(new TypeAdapter<Dictionary<long, object>>.AdapterBuilder()
                     .WithClrConversion(DictionaryTypeAdapter.Converter).Build());
             }
         }
 
         public void AddTypeAdapter<T>(TypeAdapter<T> typeAdapter)
         {
-            UserData.RegisterType<T>();
+            UserData.UnregisterType<T>();
+            UserData.RegisterType<T>(typeAdapter.DataDescriptor);
             if (Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeof(T)) != null)
             {
                 throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", typeof(T)));
