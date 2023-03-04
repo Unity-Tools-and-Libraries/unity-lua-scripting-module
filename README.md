@@ -15,7 +15,7 @@ Create the module with `new ScriptingModule()`
 ## Using The Scripting Module
 For details on how to script in Lua, search online for tutorials.
 
-For details on Moonshpar, details and tutorials are available at [https://www.moonsharp.org/](https://www.moonsharp.org/).
+For details on Moonsharp, details and tutorials are available at [https://www.moonsharp.org/](https://www.moonsharp.org/).
 
 Call `EvaluateStringAsScript`, passing in the string to run the script using the global table as the context.
 
@@ -37,5 +37,3 @@ new scripting.types.TypeAdapter<IDictionary<KeyType, ValueType>>.AdapterBuilder<
                 .WithClrConversion(DictionaryTypeAdapter.Converter)
                 .Build());
 ```
-
-With these wrapped dictionaries, keys work slightly differently, due to Lua lacking the breadth of the C# type system. Instead of using values as-is, which does not work automatically with c# `longs` and `ints` for example as Lua turns them indo `doubles` internally, the result from `GetHashCode()` is used instead.
