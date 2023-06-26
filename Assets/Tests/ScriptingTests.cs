@@ -78,7 +78,8 @@ namespace io.github.thisisnozaku.scripting
             Scripting.ContextCustomizer = (ctx) =>
             {
                 ctx.MetaTable = new Table(null);
-                ctx.MetaTable.Set("__index", DynValue.NewCallback((ctx, args) => {
+                ctx.MetaTable.Set("__index", DynValue.NewCallback((ctx, args) =>
+                {
                     return DynValue.NewNumber(1);
                 }));
                 return ctx;
@@ -107,7 +108,8 @@ namespace io.github.thisisnozaku.scripting
         public void ClrFunctionCanReceiveContextVariable()
         {
             bool called = false;
-            Scripting.Globals["foo"] = DynValue.FromObject(null, (Action<Table>)((ctx) => {
+            Scripting.Globals["foo"] = DynValue.FromObject(null, (Action<Table>)((ctx) =>
+            {
                 called = true;
                 Assert.AreEqual(1, ctx["bar"]);
                 Assert.AreEqual(2, ctx["baz"]);
@@ -125,7 +127,8 @@ namespace io.github.thisisnozaku.scripting
         public void ClrFunctionArgumentsCanPopulateFromContextByIndex()
         {
             bool called = false;
-            Scripting.Globals["foo"] = DynValue.FromObject(null, (Action<object, object>)((baz, bar) => {
+            Scripting.Globals["foo"] = DynValue.FromObject(null, (Action<object, object>)((baz, bar) =>
+            {
                 called = true;
                 Assert.AreEqual(1, bar);
                 Assert.AreEqual(2, baz);
@@ -165,6 +168,48 @@ namespace io.github.thisisnozaku.scripting
             Assert.AreEqual("one", Scripting.Globals.Get("1").String);
         }
 
+        [Test]
+        public void CanLoadAndThenExecuteScript()
+        {
+            var script = Scripting.LoadString("return 1");
+
+            Assert.AreEqual(1, Scripting.Evaluate(script).Number);
+        }
+
+        [Test]
+        public void CanReferenceGlobalVariablesInLoadedScript()
+        {
+            Scripting.Globals["foo"] = "bar";
+
+            var script = Scripting.LoadString("return foo");
+
+            Assert.AreEqual("bar", Scripting.Evaluate(script).String);
+        }
+
+        [Test]
+        public void CanCustomizeTheContextALoadedScriptUses()
+        {
+            Scripting.Globals["foo"] = "bar";
+            var ctx = new Table(null);
+            ctx.Set("foo", DynValue.NewString("baz"));
+            var script = Scripting.LoadString("return foo", ctx);
+
+            Assert.AreEqual("baz", Scripting.Evaluate(script).String);
+        }
+
+        [Test]
+        public void CanCustomizeTheContextALoadedScriptUsesAfterLoading()
+        {
+            Scripting.Globals["foo"] = "bar";
+            var ctx = new Table(null);
+            
+            var script = Scripting.LoadString("return foo", ctx);
+
+            ctx.Set("foo", DynValue.NewString("baz"));
+
+            Assert.AreEqual("baz", Scripting.Evaluate(script).String);
+        }
+
         public class TestType
         {
             public int i;
@@ -187,14 +232,6 @@ namespace io.github.thisisnozaku.scripting
             {
                 return new TestType(a.i + b.i);
             }
-        }
-
-        [Test]
-        public void CanLoadAndThenExecuteScript()
-        {
-            var script = Scripting.LoadString("return 1");
-
-            Assert.AreEqual(1, Scripting.Evaluate(script).Number);
         }
     }
 }

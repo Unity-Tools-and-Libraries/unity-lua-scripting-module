@@ -70,16 +70,15 @@ namespace io.github.thisisnozaku.scripting
         /**
          * Loads the given script and returns a DynValue which can be evaluated
          * to invoke the script.
-         * 
-         * Use this to 
          */
-        public DynValue LoadString(string script)
+        public DynValue LoadString(string script, Table globalContext = null)
         {
             if (script == null)
             {
                 throw new ArgumentNullException("script");
             }
-            return this.script.LoadString(script);
+
+            return this.script.LoadString(script, globalContext);
         }
 
         public DynValue EvaluateStringAsScript(string script, IDictionary<string, object> localContext = null)
