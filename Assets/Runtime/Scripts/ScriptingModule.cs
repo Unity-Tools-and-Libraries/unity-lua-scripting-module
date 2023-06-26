@@ -1,10 +1,10 @@
 using io.github.thisisnozaku.scripting.context;
 using io.github.thisisnozaku.scripting.types;
 using MoonSharp.Interpreter;
-using MoonSharp.VsCodeDebugger.DebuggerLogic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace io.github.thisisnozaku.scripting
@@ -21,7 +21,7 @@ namespace io.github.thisisnozaku.scripting
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
             script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods | CoreModules.Metatables);
-            Configure(ScriptingModuleConfigurationFlag.DICTIONARY_WRAPPING);
+            Configure(configurationFlags);
         }
 
         private void Configure(ScriptingModuleConfigurationFlag configurationFlags)
@@ -55,7 +55,7 @@ namespace io.github.thisisnozaku.scripting
             UserData.RegisterType<T>(typeAdapter.DataDescriptor);
             if (Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeof(T)) != null)
             {
-                throw new InvalidOperationException(string.Format("There is already a custom conversion for type {0}", typeof(T)));
+                UnityEngine.Debug.LogWarning("Overriding a custom conversion for " + typeof(T));
             }
             if (typeAdapter.ClrToScriptConverter != null)
             {
