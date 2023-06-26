@@ -67,6 +67,21 @@ namespace io.github.thisisnozaku.scripting
             }
         }
 
+        /**
+         * Loads the given script and returns a DynValue which can be evaluated
+         * to invoke the script.
+         * 
+         * Use this to 
+         */
+        public DynValue LoadString(string script)
+        {
+            if (script == null)
+            {
+                throw new ArgumentNullException("script");
+            }
+            return this.script.LoadString(script);
+        }
+
         public DynValue EvaluateStringAsScript(string script, IDictionary<string, object> localContext = null)
         {
             if (script == null)
@@ -133,14 +148,17 @@ namespace io.github.thisisnozaku.scripting
             } else
             {
                 List<object> arguments = new List<object>();
-                foreach(var entry in context)
+                if (context != null)
                 {
-                    int index = -1;
-                    if(!int.TryParse(entry.Key, out index))
+                    foreach (var entry in context)
                     {
-                        throw new InvalidOperationException(string.Format("No mapping was provided from context names to argument array indexes, so tried parsing {0} as an int. ", entry.Key));
+                        int index = -1;
+                        if (!int.TryParse(entry.Key, out index))
+                        {
+                            throw new InvalidOperationException(string.Format("No mapping was provided from context names to argument array indexes, so tried parsing {0} as an int. ", entry.Key));
+                        }
+                        arguments.Insert(index, entry.Value);
                     }
-                    arguments.Insert(index, entry.Value);
                 }
                 return arguments.ToArray();
             }

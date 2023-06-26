@@ -188,5 +188,13 @@ namespace io.github.thisisnozaku.scripting
                 return new TestType(a.i + b.i);
             }
         }
+
+        [Test]
+        public void CanLoadAndThenExecuteScript()
+        {
+            var script = Scripting.LoadString("return 1");
+
+            Assert.AreEqual(1, Scripting.Evaluate(script).Number);
+        }
     }
 }
