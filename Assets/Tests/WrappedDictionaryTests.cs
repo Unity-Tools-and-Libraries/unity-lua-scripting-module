@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using io.github.thisisnozaku.scripting;
-using MoonSharp.Interpreter;
 using NUnit.Framework;
 using UnityEngine;
+using WattleScript.Interpreter;
 
 public class WrappedDictionaryTests
 {

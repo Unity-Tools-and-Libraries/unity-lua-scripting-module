@@ -1,9 +1,9 @@
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Interop;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using WattleScript.Interpreter;
+using WattleScript.Interpreter.Interop;
 
 namespace io.github.thisisnozaku.scripting
 {

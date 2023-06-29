@@ -1,11 +1,12 @@
 using io.github.thisisnozaku.scripting.context;
 using io.github.thisisnozaku.scripting.types;
-using MoonSharp.Interpreter;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using WattleScript.Interpreter;
 
 namespace io.github.thisisnozaku.scripting
 {
@@ -107,10 +108,6 @@ namespace io.github.thisisnozaku.scripting
 
         public DynValue Evaluate(DynValue toEvaluate, IDictionary<string, object> localContext = null, List<string> argumentContextMap = null)
         {
-            if (toEvaluate == null)
-            {
-                throw new ArgumentNullException("valueExpression");
-            }
             DynValue result;
             switch (toEvaluate.Type)
             {

@@ -2,10 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using io.github.thisisnozaku.scripting;
-using MoonSharp.Interpreter;
-using MoonSharp.Interpreter.Interop;
 using NUnit.Framework;
 using UnityEngine;
+using WattleScript.Interpreter;
+using WattleScript.Interpreter.Interop;
 using static io.github.thisisnozaku.scripting.TestingScripts;
 namespace io.github.thisisnozaku.scripting
 {

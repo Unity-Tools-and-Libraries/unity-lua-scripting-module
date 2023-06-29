@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using MoonSharp.Interpreter;
 using NUnit.Framework;
+using WattleScript.Interpreter;
 
 namespace io.github.thisisnozaku.scripting
 {
@@ -227,7 +227,7 @@ namespace io.github.thisisnozaku.scripting
                 return base.GetHashCode();
             }
 
-            [MoonSharpUserDataMetamethod("__add")]
+            [WattleScriptUserDataMetamethod("__add")]
             public static TestType Add(TestType a, TestType b)
             {
                 return new TestType(a.i + b.i);

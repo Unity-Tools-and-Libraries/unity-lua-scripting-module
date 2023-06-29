@@ -1,9 +1,9 @@
 using io.github.thisisnozaku.scripting;
-using MoonSharp.Interpreter;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using WattleScript.Interpreter;
 
 public class DictionaryTypeAdapter
 {
