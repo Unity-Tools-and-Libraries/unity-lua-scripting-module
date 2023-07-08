@@ -192,7 +192,7 @@ namespace io.github.thisisnozaku.scripting
             Scripting.Globals["foo"] = "bar";
             var ctx = new Table(null);
             ctx.Set("foo", DynValue.NewString("baz"));
-            var script = Scripting.LoadString("return foo", ctx);
+            var script = Scripting.LoadString("return foo", null, ctx);
 
             Assert.AreEqual("baz", Scripting.Evaluate(script).String);
         }
@@ -203,7 +203,7 @@ namespace io.github.thisisnozaku.scripting
             Scripting.Globals["foo"] = "bar";
             var ctx = new Table(null);
             
-            var script = Scripting.LoadString("return foo", ctx);
+            var script = Scripting.LoadString("return foo", null, ctx);
 
             ctx.Set("foo", DynValue.NewString("baz"));
 

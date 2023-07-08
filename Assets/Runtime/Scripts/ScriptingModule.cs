@@ -6,7 +6,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using WattleScript.Interpreter;
+using WattleScript.Interpreter.Debugging;
 
 namespace io.github.thisisnozaku.scripting
 {
@@ -14,6 +16,7 @@ namespace io.github.thisisnozaku.scripting
     {
         internal Script script;
         public Table Globals => script.Globals;
+        private Thread executionThread;
         /*
          * Function to customize the context that will be used by a script execution.
          */
@@ -21,8 +24,9 @@ namespace io.github.thisisnozaku.scripting
 
         public ScriptingModule(ScriptingModuleConfigurationFlag configurationFlags = 0)
         {
-            script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods | CoreModules.Metatables);
+            
             Configure(configurationFlags);
+            script = new Script(CoreModules.Preset_HardSandbox | CoreModules.LoadMethods | CoreModules.Metatables);
         }
 
         private void Configure(ScriptingModuleConfigurationFlag configurationFlags)
@@ -72,14 +76,14 @@ namespace io.github.thisisnozaku.scripting
          * Loads the given script and returns a DynValue which can be evaluated
          * to invoke the script.
          */
-        public DynValue LoadString(string script, Table globalContext = null)
+        public DynValue LoadString(string script, string scriptName = null, Table globalContext = null)
         {
             if (script == null)
             {
                 throw new ArgumentNullException("script");
             }
 
-            return this.script.LoadString(script, globalContext);
+            return this.script.LoadString(script, globalContext, scriptName);
         }
 
         public DynValue EvaluateStringAsScript(string script, IDictionary<string, object> localContext = null)
@@ -90,6 +94,7 @@ namespace io.github.thisisnozaku.scripting
             }
             return Evaluate(DynValue.NewString(script), localContext);
         }
+
         public DynValue EvaluateStringAsScript(string script, KeyValuePair<string, object> localContext)
         {
             return EvaluateStringAsScript(script, new Dictionary<string, object>() {
@@ -187,6 +192,12 @@ namespace io.github.thisisnozaku.scripting
                 contextTable = ContextCustomizer(contextTable);
             }
             return contextTable;
+        }
+
+        public void AttachDebugger(IDebugger debugger)
+        {
+            script.AttachDebugger(debugger);
+            script.DebuggerEnabled = true;
         }
     }
 }
